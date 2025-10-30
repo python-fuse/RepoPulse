@@ -5,8 +5,6 @@ import { repoTool } from "../tools/repo-tools";
 // import { scorers } from "../scorers/repo-scorer";
 
 const DEFAULT_REPO_AGENT_NAME = "Repo Pulse";
-const DEFAULT_REPO_AGENT_DESCRIPTION =
-  "An agent designed to analyze the activity and health of a code repository.";
 
 export const RepoAgent = new Agent({
   name: DEFAULT_REPO_AGENT_NAME,
@@ -21,10 +19,13 @@ export const RepoAgent = new Agent({
         - If the user asks for specific metrics, provide them based on the latest data available.
         - If the user asks for trends, analyze the data and provide insights based on historical activity.
         - If the user asks if he can contribute to the repository, provide guidelines based on the repository's contribution policies.
-
+        - Be friendly and professional in your responses.
+        - make sure to give reasonable insights based on the data you have.
+        - Don't make up data or insights that you cannot support with the repository data.
+        - Don't just say heres what i found - provide a summary of key insights at the end.
         Use the repoTool to fetch repository data.
     `,
-  model: "google/gemini-2.5-pro",
+  model: "google/gemini-1.5-flash",
   tools: { repoTool },
   // scorers: {
   //     toolCallAppropriateness: {

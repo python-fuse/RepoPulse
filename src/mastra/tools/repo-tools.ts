@@ -16,6 +16,7 @@ export const repoTool = createTool({
     openIssues: z.number(),
     lastUpdated: z.string(),
     activityLevel: z.string(),
+    commitsCount: z.number(),
     createdAt: z.string(),
     owner: z.object({
       name: z.string(),
@@ -70,6 +71,7 @@ const fetchRepoInfo = async (repoUrl: string) => {
     lastUpdated: data.updated_at,
     createdAt: data.created_at,
     activityLevel: activityLevel,
+    commitsCount: data.commits_count,
     owner: {
       name: data.owner.login,
       profileUrl: data.owner.html_url,
