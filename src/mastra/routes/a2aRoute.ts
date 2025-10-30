@@ -99,6 +99,8 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
         });
       }
 
+      console.log("Artifacts:", response.toolResults);
+
       //   Conversation history
       const conversationHistory: Message[] = [
         ...messageList.map((msg: Message) => ({
@@ -133,7 +135,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
             kind: "message" as const,
           },
         },
-        artifacts,
+        artifacts: artifacts,
         history: conversationHistory,
         kind: "task" as const,
       });
