@@ -4,7 +4,7 @@ import { LibSQLStore } from "@mastra/libsql";
 import { RepoAgent } from "./agents/repo-agent";
 
 export const mastra = new Mastra({
-  agents: { RepoAgent },
+  agents: { repoAgent: RepoAgent },
   storage: new LibSQLStore({
     // stores observability, scores, ... into memory storage, if it needs to persist, change to file:../mastra.db
     url: ":memory:",

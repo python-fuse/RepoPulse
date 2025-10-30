@@ -25,7 +25,7 @@ export const RepoAgent = new Agent({
         - Don't just say heres what i found - provide a summary of key insights at the end.
         Use the repoTool to fetch repository data.
     `,
-  model: "google/gemini-1.5-flash",
+  model: "google/gemini-2.5-flash",
   tools: { repoTool },
   // scorers: {
   //     toolCallAppropriateness: {
