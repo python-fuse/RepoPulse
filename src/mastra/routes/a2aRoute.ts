@@ -64,7 +64,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
           msg.parts
             ?.map((part) => {
               if (part.kind === "text") return part.text;
-              if (part.kind === "data") return JSON.stringify(part.data);
+              // if (part.kind === "text") return JSON.stringify(part.data);
               return "";
             })
             .join("\n") || "",
@@ -93,7 +93,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
           artifactId: crypto.randomUUID(),
           name: "ToolResults",
           parts: response.toolResults.map((result) => ({
-            kind: "data",
+            kind: "text",
             data: result,
           })),
         });
