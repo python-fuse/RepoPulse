@@ -2,6 +2,7 @@ import { Mastra } from "@mastra/core/mastra";
 import { PinoLogger } from "@mastra/loggers";
 import { LibSQLStore } from "@mastra/libsql";
 import { RepoAgent } from "./agents/repo-agent";
+import { a2aAgentApiRoute } from "./routes/a2aRoute";
 
 export const mastra = new Mastra({
   agents: { repoAgent: RepoAgent },
@@ -14,7 +15,7 @@ export const mastra = new Mastra({
     level: "info",
   }),
   server: {
-    // apiRoutes:[a2aAgentApiRoute]
+    apiRoutes: [a2aAgentApiRoute],
   },
   telemetry: {
     // Telemetry is deprecated and will be removed in the Nov 4th release
