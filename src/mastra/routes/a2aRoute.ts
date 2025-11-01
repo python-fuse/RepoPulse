@@ -93,8 +93,8 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
           artifactId: crypto.randomUUID(),
           name: "ToolResults",
           parts: response.toolResults.map((result) => ({
-            kind: "text",
-            text: result,
+            kind: "data",
+            data: result,
           })),
         });
       }
@@ -126,13 +126,15 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
         result: {
           id: taskId || crypto.randomUUID(),
           contextId: contextId || crypto.randomUUID(),
-          state: "completed",
-          timestamp: new Date().toISOString(),
-          message: {
-            messageId: crypto.randomUUID(),
-            role: "agent",
-            parts: [{ kind: "text", text: agentText }],
-            kind: "message" as const,
+          status: {
+            state: "completed",
+            timestamp: new Date().toISOString(),
+            message: {
+              messageId: crypto.randomUUID(),
+              role: "agent",
+              parts: [{ kind: "text", text: agentText }],
+              kind: "message" as const,
+            },
           },
         },
         artifacts: artifacts,
