@@ -22,7 +22,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
             error: {
               code: -32602,
               message: "Invalid Request",
-              data: {
+              text: {
                 details:
                   "jsonrpc version must be '2.0' and id must be provided",
               },
@@ -64,7 +64,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
           msg.parts
             ?.map((part) => {
               if (part.kind === "text") return part.text;
-              // if (part.kind === "text") return JSON.stringify(part.data);
+              // if (part.kind === "text") return JSON.stringify(part.text);
               return "";
             })
             .join("\n") || "",
@@ -93,8 +93,8 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
           artifactId: crypto.randomUUID(),
           name: "ToolResults",
           parts: response.toolResults.map((result) => ({
-            kind: "data",
-            data: result.payload.result,
+            kind: "text",
+            text: result.payload.result,
           })),
         });
       }
@@ -137,7 +137,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
             },
           },
         },
-        artifacts: artifacts,
+        artifacts: { parts: artifacts },
         history: conversationHistory,
         kind: "task" as const,
       });
@@ -149,7 +149,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
           error: {
             code: -32603,
             message: "Internal error",
-            data: {
+            text: {
               details: (error as unknown as Error).message,
             },
           },
