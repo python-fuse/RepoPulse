@@ -94,7 +94,7 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
           name: "ToolResults",
           parts: response.toolResults.map((result) => ({
             kind: "data",
-            data: result,
+            data: result.payload.result,
           })),
         });
       }
