@@ -1,31 +1,27 @@
-import { Message } from "@mastra/core/a2a";
 import { registerApiRoute } from "@mastra/core/server";
-import { error } from "console";
+import { randomUUID } from "crypto";
 
-export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
+export const a2aAgentRoute = registerApiRoute("/a2a/agent/:agentId", {
   method: "POST",
-  handler: async (ctx) => {
+  handler: async (c) => {
     try {
-      const mastra = ctx.get("mastra");
-      const agentId = ctx.req.param("agentId");
+      const mastra = c.get("mastra");
+      const agentId = c.req.param("agentId");
 
-      //   Parse the JSON-RPC 2.0 request body
-      const body = await ctx.req.json();
+      // Parse JSON-RPC 2.0 request
+      const body = await c.req.json();
+      const { jsonrpc, id: requestId, method, params } = body;
 
-      const { jsonrpc, method, params, id: requestId } = body;
-
-      if (jsonrpc !== "2.0") {
-        return ctx.json(
+      // Validate JSON-RPC 2.0 format
+      if (jsonrpc !== "2.0" || !requestId) {
+        return c.json(
           {
             jsonrpc: "2.0",
             id: requestId || null,
             error: {
-              code: -32602,
-              message: "Invalid Request",
-              text: {
-                details:
-                  "jsonrpc version must be '2.0' and id must be provided",
-              },
+              code: -32600,
+              message:
+                'Invalid Request: jsonrpc must be "2.0" and id is required',
             },
           },
           400
@@ -34,12 +30,12 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
 
       const agent = mastra.getAgent(agentId);
       if (!agent) {
-        return ctx.json(
+        return c.json(
           {
             jsonrpc: "2.0",
-            id: requestId || null,
+            id: requestId,
             error: {
-              code: -32601,
+              code: -32602,
               message: `Agent '${agentId}' not found`,
             },
           },
@@ -47,111 +43,104 @@ export const a2aAgentApiRoute = registerApiRoute("/a2a/agent/:agentId", {
         );
       }
 
-      let { message, messages, contextId, taskId, metadata } = params || {};
+      // Extract messages from params
+      const { message, messages, contextId, taskId, metadata } = params || {};
 
-      let messageList = [];
-
+      let messagesList = [];
       if (message) {
-        messageList = [message];
+        messagesList = [message];
       } else if (messages && Array.isArray(messages)) {
-        messageList = messages;
+        messagesList = messages;
       }
 
-      //   convert A2A messages to mastra format
-      const mastraMessages = messageList.map((msg: Message) => ({
+      // Convert A2A messages to Mastra format
+      const mastraMessages = messagesList.map((msg) => ({
         role: msg.role,
         content:
           msg.parts
-            ?.map((part) => {
+            ?.map((part: any) => {
               if (part.kind === "text") return part.text;
-              // if (part.kind === "text") return JSON.stringify(part.text);
+              if (part.kind === "data") return JSON.stringify(part.data);
               return "";
             })
             .join("\n") || "",
       }));
 
-      // Convert to simple string array
-      const response = await agent.generate(
-        mastraMessages.map((msg) => `${msg.role}: ${msg.content}`)
-      );
-
+      // Execute agent
+      const response = await agent.generate(mastraMessages);
       const agentText = response.text || "";
 
-      //   build artifacts array
-      const artifacts: any = [
+      // Build artifacts array
+      const artifacts = [
         {
-          artifactId: crypto.randomUUID(),
+          artifactId: randomUUID(),
           name: `${agentId}Response`,
           parts: [{ kind: "text", text: agentText }],
         },
       ];
 
-      //   add tool results as artifacts
-
+      // Add tool results as artifacts
       if (response.toolResults && response.toolResults.length > 0) {
         artifacts.push({
-          artifactId: crypto.randomUUID(),
+          artifactId: randomUUID(),
           name: "ToolResults",
-          parts: response.toolResults.map((result) => ({
-            kind: "text",
-            text: result.payload.result,
+          // @ts-ignore
+          parts: response.toolResults.map((result: any) => ({
+            kind: "data",
+            data: result,
           })),
         });
       }
 
-      console.log("Artifacts:", response.toolResults);
-
-      //   Conversation history
-      const conversationHistory: Message[] = [
-        ...messageList.map((msg: Message) => ({
-          kind: "message" as const,
+      // Build conversation history
+      const history = [
+        ...messagesList.map((msg) => ({
+          kind: "message",
           role: msg.role,
           parts: msg.parts,
-          messageId: msg.messageId || crypto.randomUUID(),
-          taskId: msg.taskId || crypto.randomUUID(),
+          messageId: msg.messageId || randomUUID(),
+          taskId: msg.taskId || taskId || randomUUID(),
         })),
         {
-          kind: "message" as const,
+          kind: "message",
           role: "agent",
           parts: [{ kind: "text", text: agentText }],
-          messageId: crypto.randomUUID(),
-          taskId: taskId || crypto.randomUUID(),
+          messageId: randomUUID(),
+          taskId: taskId || randomUUID(),
         },
       ];
 
-      //   finally return the response as an a2a response
-      return ctx.json({
+      // Return A2A-compliant response
+      return c.json({
         jsonrpc: "2.0",
         id: requestId,
         result: {
-          id: taskId || crypto.randomUUID(),
-          contextId: contextId || crypto.randomUUID(),
+          id: taskId || randomUUID(),
+          contextId: contextId || randomUUID(),
           status: {
             state: "completed",
             timestamp: new Date().toISOString(),
             message: {
-              messageId: crypto.randomUUID(),
+              messageId: randomUUID(),
               role: "agent",
               parts: [{ kind: "text", text: agentText }],
-              kind: "message" as const,
+              kind: "message",
             },
           },
+          artifacts,
+          history,
+          kind: "task",
         },
-        artifacts: artifacts,
-        history: conversationHistory,
-        kind: "task" as const,
       });
-    } catch (err) {
-      return ctx.json(
+    } catch (error: any) {
+      return c.json(
         {
           jsonrpc: "2.0",
           id: null,
           error: {
             code: -32603,
             message: "Internal error",
-            text: {
-              details: (error as unknown as Error).message,
-            },
+            data: { details: error.message },
           },
         },
         500
